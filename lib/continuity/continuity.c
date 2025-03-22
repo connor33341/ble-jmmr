@@ -1,7 +1,7 @@
 #include "continuity.h"
 #include <stdlib.h> // For rand()
 #include <esp_system.h> // For esp_fill_random()
-#include <Arduino.h>
+//#include <Arduino.h>
 #include <stdint.h>
 
 // Define COUNT_OF if not provided elsewhere

@@ -1,15 +1,18 @@
 #include <stdio.h>
-#include <Arduino.h>
+//#include <Arduino.h>
 #include <stdlib.h>
 #include <string.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_log.h"
-#include "esp_bt.h"
-#include "esp_bt_main.h"
-#include "esp_gap_ble_api.h"
+//#include "esp_bt_main.h"
+//#include "esp_gap_ble_api.h"
 #include "continuity.h"
 #include <esp_err.h>
+#include <nvs_flash.h>
+#include "esp_bt_main.h"
+#include <esp_gap_ble_api.h>
+#include <esp_bt.h>
 
 static const char *TAG = "AppleBLESpam";
 
@@ -84,13 +87,13 @@ static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param
 static void init_ble(void) {
     esp_err_t ret;
 
-    ESP_ERROR_CHECK(spi_flash_init());
+    nvs_flash_init();
     esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
-    ESP_ERROR_CHECK(esp_bt_controller_init(&bt_cfg));
-    ESP_ERROR_CHECK(esp_bt_controller_enable(ESP_BT_MODE_BLE));
-    ESP_ERROR_CHECK(esp_bluedroid_init());
-    ESP_ERROR_CHECK(esp_bluedroid_enable());
-    ESP_ERROR_CHECK(esp_ble_gap_register_callback(gap_event_handler));
+    esp_bt_controller_init(&bt_cfg);
+    esp_bt_controller_enable(ESP_BT_MODE_BLE);
+    esp_bluedroid_init();
+    esp_bluedroid_enable();
+    esp_ble_gap_register_callback(gap_event_handler);
 
     uint8_t mac[6];
     esp_fill_random(mac, sizeof(mac));
@@ -108,7 +111,6 @@ static void set_adv_data(Payload *payload) {
         ESP_LOGE(TAG, "Advertisement data too large");
         return;
     }
-
     continuity_generate_packet(msg, adv_data);
     esp_ble_gap_config_adv_data_raw(adv_data, adv_data_len);
 }
@@ -130,11 +132,7 @@ static void ble_spam_task(void *pvParameters) {
     }
 }
 
-void setup(void) {
+void app_main(void) {
     init_ble();
     xTaskCreate(ble_spam_task, "ble_spam_task", 4096, NULL, 5, NULL);
-}
-
-void loop(void){
-    delay(1);
 }

@@ -1,7 +1,11 @@
 #ifndef CONTINUITY_H
 #define CONTINUITY_H
 
-#include <stdint.h>
+#include <stdint.h> // For uint8_t, uint16_t
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef enum {
     ContinuityTypeAirDrop,
@@ -39,5 +43,9 @@ typedef struct {
 const char* continuity_get_type_name(ContinuityType type);
 uint8_t continuity_get_packet_size(ContinuityType type);
 void continuity_generate_packet(const ContinuityMsg* msg, uint8_t* packet);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // CONTINUITY_H

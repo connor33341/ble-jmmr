@@ -1,6 +1,6 @@
 #include "continuity.h"
 #include <stdint.h>
-#include <stdlib.h> // For rand()
+#include <stdlib.h>
 
 #ifndef COUNT_OF
 #define COUNT_OF(x) (sizeof(x) / sizeof((x)[0]))
@@ -141,9 +141,9 @@ void continuity_generate_packet(const ContinuityMsg* msg, uint8_t* packet) {
 
     case ContinuityTypeCustomCrash:
         i -= 2;
-        packet[i++] = ContinuityTypeNearbyAction;
-        packet[i++] = 0x05;
-        packet[i++] = 0xC1;
+        packet[i++] = ContinuityTypeNearbyAction; // 0x09
+        packet[i++] = 0x05; // Length of Nearby Action segment
+        packet[i++] = 0xC1; // Action Flags (crash trigger)
         const uint8_t types[] = {0x27, 0x09, 0x02, 0x1e, 0x2b, 0x2d, 0x2f, 0x01, 0x06, 0x20, 0xc0};
         packet[i++] = types[rand() % COUNT_OF(types)];
         for (uint8_t j = 0; j < 3; j++) {
@@ -151,7 +151,8 @@ void continuity_generate_packet(const ContinuityMsg* msg, uint8_t* packet) {
         }
         packet[i++] = 0x00;
         packet[i++] = 0x00;
-        packet[i++] = ContinuityTypeNearbyInfo;
+        packet[i++] = ContinuityTypeNearbyInfo; // 0x0A
+        packet[i++] = 0x03; // Length of Nearby Info segment
         for (uint8_t j = 0; j < 3; j++) {
             packet[i++] = rand() % 256;
         }

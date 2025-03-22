@@ -1,7 +1,7 @@
 #include <NimBLEDevice.h>
 #include "continuity.h"
 
-#define ADV_INTERVAL_MS 1000
+#define ADV_INTERVAL_MS 100
 
 static const char *TAG = "AppleBLESpam";
 
@@ -465,48 +465,48 @@ NimBLEAdvertising *pAdvertising;
 uint8_t adv_data[31];
 uint8_t adv_data_len = 0;
 
-void set_adv_data(Payload *payload)
-{
+void set_adv_data(Payload *payload) {
     ContinuityMsg *msg = &payload->msg;
-    if (payload->random)
-    {
+    if (payload->random) {
         msg->data.nearby_action.type = rand() % 0xFF;
     }
 
     adv_data_len = continuity_get_packet_size(msg->type);
-    if (adv_data_len > sizeof(adv_data))
-    {
+    if (adv_data_len > sizeof(adv_data)) {
         Serial.printf("[%s] Advertisement data too large\n", TAG);
         return;
     }
 
     continuity_generate_packet(msg, adv_data);
 
+    Serial.printf("[%s] Adv Data (%s): ", TAG, payload->title);
+    for (uint8_t i = 0; i < adv_data_len; i++) {
+        Serial.printf("%02X ", adv_data[i]);
+    }
+    Serial.println();
+
     NimBLEAdvertisementData advData;
-    advData.setManufacturerData(std::string((char *)adv_data, adv_data_len));
+    advData.setManufacturerData(std::string((char*)adv_data, adv_data_len));
     pAdvertising->setAdvertisementData(advData);
 }
 
-void setup()
-{
+void setup() {
     Serial.begin(115200);
     Serial.printf("[%s] Initializing BLE\n", TAG);
 
-    // Initialize NimBLE
     NimBLEDevice::init("AppleBLESpam");
     NimBLEDevice::setPower(ESP_PWR_LVL_P9); // Max power
 
-    // Get advertising object
     pAdvertising = NimBLEDevice::getAdvertising();
-    pAdvertising->setMinInterval(ADV_INTERVAL_MS / 0.625); // Convert ms to 0.625ms units
-    pAdvertising->setMaxInterval(ADV_INTERVAL_MS / 0.625);
+    pAdvertising->setMinInterval(32); // 20ms
+    pAdvertising->setMaxInterval(32);
+    //pAdvertising->setAdvertisementType(BLE_GAP_CONN_MODE_NON);
 
-    // Seed random number generator
     randomSeed(analogRead(0));
+    Serial.printf("[%s] BLE Initialized, starting advertisements\n", TAG);
 }
 
-void loop()
-{
+void loop() {
     static int payload_index = 0;
 
     Payload *payload = &payloads[payload_index];
@@ -517,7 +517,7 @@ void loop()
     delay(ADV_INTERVAL_MS);
 
     pAdvertising->stop();
-    delay(50);
+    delay(10);
 
     payload_index = (payload_index + 1) % PAYLOAD_COUNT;
 }

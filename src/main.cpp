@@ -1,7 +1,7 @@
 #include <NimBLEDevice.h>
 #include "continuity.h"
 
-#define ADV_INTERVAL_MS 100
+#define ADV_INTERVAL_MS 20
 
 static const char *TAG = "AppleBLESpam";
 
@@ -496,6 +496,10 @@ void setup() {
 
     NimBLEDevice::init("AppleBLESpam");
     NimBLEDevice::setPower(ESP_PWR_LVL_P9); // Max power
+
+    esp_ble_tx_power_set(ESP_BLE_PWR_TYPE_DEFAULT, ESP_PWR_LVL_P9);
+    esp_ble_tx_power_set(ESP_BLE_PWR_TYPE_ADV, ESP_PWR_LVL_P9); //Not sure if this works with NimBLE
+    esp_ble_tx_power_set(ESP_BLE_PWR_TYPE_SCAN ,ESP_PWR_LVL_P9);
 
     pAdvertising = NimBLEDevice::getAdvertising();
     pAdvertising->setMinInterval(32); // 20ms
